@@ -1,0 +1,21 @@
+# Ambiente Virtual (NUNCA envie isso)
+venv/
+env/
+.venv/
+
+# Caches do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs e arquivos temporários do sistema
+*.log
+.DS_Store
+Thumbs.db
+
+# Playwright / Navegadores (caso baixem algo local)
+.auth/
+user_data/
+
+# Variáveis de ambiente (caso use senhas ou chaves de API depois)
+.env
