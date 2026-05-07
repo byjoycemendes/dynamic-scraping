@@ -1,138 +1,88 @@
-import asyncio
-import json
-import logging
-from pathlib import Path
-
-from playwright.async_api import async_playwright
+from browser import BrowserManager
+from monitor import NetworkMonitor
 
 
-logging.basicConfig(level=logging.INFO)
+# URL utilizada no desafio
+URL = "https://frenqulabi.com/ig/atlas"
 
 
-class NetworkMonitor:
+def main():
 
-    def __init__(self):
-        self.responses = []
+    #Função principal responsável por executar o scraping dinâmico
+    browser = BrowserManager(
+        headless=True
+    )
 
-    async def handle_response(self, response):
+    # Inicia navegador e retorna objeto Page do Playwright
+    page = browser.start()
 
-        try:
+    # Inicia monitor responsável pela interceptação de requests e responses HTTP
 
-            content_type = response.headers.get(
-                "content-type",
-                ""
-            )
+    monitor = NetworkMonitor()
 
-            logging.info(
-                f"[RESPONSE] {response.status} - {response.url}"
-            )
+    # Listener responsável por capturar todas as requests da página na navegação
+    page.on(
+        "request",
+        monitor.handle_request
+    )
 
-            if "application/json" in content_type:
+    # Listener responsavel por capturar todas as responses recebidas pela página na navegação
+    page.on(
+        "response",
+        monitor.handle_response
+    )
 
-                data = await response.json()
+    try:
 
-                self.responses.append({
-                    "url": response.url,
-                    "status": response.status,
-                    "data": data
-                })
+        print("[*] Criando sessão inicial...")
 
-        except Exception as e:
-            logging.error(e)
-
-
-class AtlasScraper:
-
-    def __init__(self, url):
-
-        self.url = url
-
-        self.browser = None
-        self.context = None
-        self.page = None
-
-        self.monitor = NetworkMonitor()
-
-    async def start(self):
-
-        playwright = await async_playwright().start()
-
-        self.browser = await playwright.chromium.launch(
-            headless=False
-        )
-
-        self.context = await self.browser.new_context()
-
-        self.page = await self.context.new_page()
-
-        self.page.on(
-            "response",
-            self.monitor.handle_response
-        )
-
-    async def navigate(self):
-
-        logging.info("[INFO] Abrindo página")
-
-        await self.page.goto(
-            self.url,
+        # Primeira navegação para criação de sessão, cookies e contexto inicial do domínio
+        page.goto(
+            "https://frenqulabi.com",
             wait_until="domcontentloaded"
         )
 
-    async def analyze_page(self):
+        # Aguarda estabilização inicial da página
+        page.wait_for_timeout(3000)
 
-        logging.info("[INFO] Coletando informações")
+        print("[*] Acessando rota protegida...")
 
-        title = await self.page.title()
+        # Acessa a rota protegida pelo hCaptcha
+        page.goto(
+            URL,
+            wait_until="load"
+        )
 
-        logging.info(f"[TITLE] {title}")
+        # Aguarda carregamento do challenge e assets do captcha
+        page.wait_for_timeout(5000)
 
-        cookies = await self.context.cookies()
+        print("[*] Título:")
+        print(page.title())
 
-        Path("output").mkdir(exist_ok=True)
+        print("[*] Cookies:")
 
-        with open(
-            "output/cookies.json",
-            "w",
-            encoding="utf-8"
-        ) as f:
+        # Captura cookies da sessão atual
+        cookies = page.context.cookies()
 
-            json.dump(
-                cookies,
-                f,
-                indent=4
-            )
+        print(cookies)
 
-        await self.page.screenshot(
-            path="output/page.png",
+        # Gera screenshot final da página renderizada
+        page.screenshot(
+            path="resultado.png",
             full_page=True
         )
 
-    async def run(self):
+        # Salva responses em JSON
+        monitor.save()
 
-        await self.start()
+        print("[*] Finalizado.")
 
-        try:
+    finally:
 
-            await self.navigate()
-
-            await asyncio.sleep(10)
-
-            await self.analyze_page()
-
-        finally:
-
-            await self.browser.close()
+        # Finaliza navegador e salva tracing
+        browser.close()
 
 
-async def main():
-
-    scraper = AtlasScraper(
-        "https://frenqulabi.com/ig/atlas"
-    )
-
-    await scraper.run()
-
-
+# Entrada do programa
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

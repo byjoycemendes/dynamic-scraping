@@ -1,21 +1,13 @@
-# --- Python ---
 __pycache__/
-*.py[cod]
-*$py.class
-.env
-.venv/
-env/
+*.pyc
+
 venv/
 
-# --- Playwright / Automação ---
-# Bloqueia os navegadores baixados localmente (pesados e desnecessários no Git)
-.auth/
-test-results/
-playwright-report/
-blob-report/
-playwright-log.txt
-
-# --- Sistema / IDE ---
 .vscode/
-.idea/
+
+trace.zip
+
+responses.json
+resultado.png
+
 .DS_Store
