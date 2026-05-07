@@ -1,21 +1,21 @@
-# Ambiente Virtual (NUNCA envie isso)
-venv/
-env/
-.venv/
-
-# Caches do Python
+# --- Python ---
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Logs e arquivos temporários do sistema
-*.log
-.DS_Store
-Thumbs.db
-
-# Playwright / Navegadores (caso baixem algo local)
-.auth/
-user_data/
-
-# Variáveis de ambiente (caso use senhas ou chaves de API depois)
 .env
+.venv/
+env/
+venv/
+
+# --- Playwright / Automação ---
+# Bloqueia os navegadores baixados localmente (pesados e desnecessários no Git)
+.auth/
+test-results/
+playwright-report/
+blob-report/
+playwright-log.txt
+
+# --- Sistema / IDE ---
+.vscode/
+.idea/
+.DS_Store
